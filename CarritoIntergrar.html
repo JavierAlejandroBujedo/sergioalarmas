@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carrito de Compras</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+  }
+  .product {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin: 10px;
+  }
+  .cart-item {
+    display: flex;
+    align-items: center;
+    margin: 5px;
+  }
+</style>
+</head>
+<body>
+  <h1>Carrito de Compras</h1>
+  
+  <div class="product">
+    <h2>Producto 1</h2>
+    <p>Precio: $15</p>
+    <button class="add-to-cart">Agregar al carrito</button>
+  </div>
+  <div class="product">
+    <h2>Producto 2</h2>
+    <p>Precio: $25</p>
+    <button class="add-to-cart">Agregar al carrito</button>
+  </div>
+  <div class="product">
+    <h2>Producto 3</h2>
+    <p>Precio: $35</p>
+    <button class="add-to-cart">Agregar al carrito</button>
+  </div>
+
+
+  <!-- Repite el bloque .product para los otros productos con distintos precios -->
+
+  <h2>Carrito de Compras</h2>
+  <div id="cart">
+    <!-- Items seleccionados se agregarán aquí -->
+  </div>
+
+  <div>
+    <button id="reset">Abandonar Compra</button>
+    <h2>Total: $<span id="total">0.00</span></h2>
+  </div>
+
+  <h2>Formas de Pago:</h2>
+  <button id="efectivo">Efectivo</button>
+  <button id="transferencia">Transferencia</button>
+  <button id="mercadoPago">Mercado Pago</button>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    const products = document.querySelectorAll('.product');
+    const totalElement = document.getElementById('total');
+    const cartElement = document.getElementById('cart');
+    const resetButton = document.getElementById('reset');
+    let total = 0;
+    let cartItems = [];
+
+
+    products.forEach(product => {
+      const addToCartBtn = product.querySelector('.add-to-cart');
+      const price = parseFloat(product.querySelector('p').textContent.split('$')[1]);
+      const title = product.querySelector('h2').textContent;
+
+      addToCartBtn.addEventListener('click', () => {
+        const existingCartItem = cartItems.find(item => item.title === title);
+        if (existingCartItem) {
+          existingCartItem.quantity++;
+          existingCartItem.totalPrice = existingCartItem.quantity * existingCartItem.price;
+        } else {
+          cartItems.push({ title, price, quantity: 1, totalPrice: price });
+        }
+        total = cartItems.reduce((acc, item) => acc + item.totalPrice, 0);
+        totalElement.textContent = total.toFixed(2);
+        updateCart();
+      });
+    });
+
+    const updateCart = () => {
+      cartElement.innerHTML = '';
+      cartItems.forEach(item => {
+        const cartItem = document.createElement('div');
+        cartItem.classList.add('cart-item');
+        cartItem.innerHTML = `
+          <h3>${item.title}</h3>
+          <span>Cantidad: ${item.quantity}</span>
+          <span>Total: $${item.totalPrice.toFixed(2)}</span>
+          <button class="cart-decrement">-</button>
+          <button class="cart-increment">+</button>
+        `;
+        cartElement.appendChild(cartItem);
+
+        const cartIncrementBtn = cartItem.querySelector('.cart-increment');
+        const cartDecrementBtn = cartItem.querySelector('.cart-decrement');
+        const quantityElement = cartItem.querySelector('span:nth-child(2)');
+        
+        cartIncrementBtn.addEventListener('click', () => {
+          item.quantity++;
+          item.totalPrice += item.price;
+          quantityElement.textContent = `Cantidad: ${item.quantity}`;
+          total += item.price;
+          totalElement.textContent = total.toFixed(2);
+        });
+
+        cartDecrementBtn.addEventListener('click', () => {
+          if (item.quantity > 1) {
+            item.quantity--;
+            item.totalPrice -= item.price;
+            quantityElement.textContent = `Cantidad: ${item.quantity}`;
+            total -= item.price;
+            totalElement.textContent = total.toFixed(2);
+          }
+        });
+      });
+    };
+
+    resetButton.addEventListener('click', () => {
+      total = 0;
+      cartItems = [];
+      updateCart();
+      totalElement.textContent = total.toFixed(2);
+    });
+
+
+    const efectivoBtn = document.getElementById('efectivo');
+    const transferenciaBtn = document.getElementById('transferencia');
+    const mercadoPagoBtn = document.getElementById('mercadoPago');
+
+    efectivoBtn.addEventListener('click', () => {
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text('Detalle del Carrito de Compras', 10, 10);
+
+      cartItems.forEach((item, index) => {
+        const yPosition = 20 + index * 10;
+        const itemText = `${item.title} - Cantidad: ${item.quantity} - Total: $${item.totalPrice.toFixed(2)}`;
+        doc.text(itemText, 10, yPosition);
+      });
+
+      doc.save('carrito_de_compras.pdf');
+    });
+
+    transferenciaBtn.addEventListener('click', () => {
+      alert('Has elegido pagar con transferencia.');
+    });
+
+    mercadoPagoBtn.addEventListener('click', () => {
+      alert('Has elegido pagar con Mercado Pago.');
+    });
+
+  </script>
+</body>
+</html>
